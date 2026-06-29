@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest an improvement or a new agent/skill
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the motivation or the gap you ran into.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should the agent/skill/router do? Reference a book chapter if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - New agent pattern
+        - Existing agent improvement
+        - MetaAgent routing
+        - Skills / docs
+        - Tooling / CI
+        - Other
+    validations:
+      required: true
