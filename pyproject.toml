@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thirty-agents"
+version = "1.0.0"
+description = "31 runnable agent patterns + a routing MetaAgent, from '30 Intelligent Agents Every AI Engineer Should Know' (Packt)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+keywords = ["agents", "llm", "rag", "ai", "orchestration", "metaagent"]
+
+# Core runtime needs nothing beyond the standard library (offline MockLLM).
+dependencies = []
+
+[project.optional-dependencies]
+openai = ["openai>=1.0"]
+anthropic = ["anthropic>=0.34"]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+# The agent modules start with digits (01_..._agent.py) so they are loaded
+# dynamically via importlib rather than packaged as importable modules.
+[tool.setuptools]
+py-modules = ["catalog", "meta_agent"]
+packages = ["common"]

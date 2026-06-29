@@ -1,0 +1,17 @@
+# 30-agents toolkit — runtime dependencies
+#
+# The agents, MetaAgent router, and generators run FULLY OFFLINE on the Python
+# standard library alone, using the built-in MockLLM (the book's "Simulation
+# Mode"). Nothing below is required to run `python run_all.py` or the tests.
+#
+# Install the optional extras only if you want the agents to call a live model:
+#
+#   pip install -r requirements.txt          # nothing mandatory
+#   pip install ".[openai]"  /  ".[anthropic]"   # see pyproject.toml extras
+#
+# Optional live-LLM providers (auto-detected via API keys in get_llm):
+#   openai>=1.0        # set OPENAI_API_KEY
+#   anthropic>=0.34    # set ANTHROPIC_API_KEY
+#
+# Optional dev tooling:
+#   pytest>=8.0        # run the test suite under tests/
