@@ -1,5 +1,7 @@
 # 30 Agents
 
+[![CI](https://github.com/Gopilagadapati/30-intelligent-agents/actions/workflows/ci.yml/badge.svg)](https://github.com/Gopilagadapati/30-intelligent-agents/actions/workflows/ci.yml)
+
 Runnable Python implementations of the **31 agent architectures** from the book
 *30 Intelligent Agents Every AI Engineer Should Know* (Imran Ahmad, PhD — Packt, 2026),
 spanning Chapters 5–16.
