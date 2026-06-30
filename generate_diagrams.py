@@ -27,13 +27,23 @@ REPO = "github.com/Gopilagadapati/30-intelligent-agents"
 # palette
 INK = "#0f1b2d"
 ACCENT = "#1f6feb"
-BOX = "#eaf1fb"
-BOX_EDGE = "#1f6feb"
-GATE = "#fff4e5"
-GATE_EDGE = "#e8820c"
-LOOP = "#137a4b"
 MUTED = "#5b6b7f"
 BG = "#ffffff"
+LOOP = "#137a4b"
+
+# role-based color coding for stages
+ROLE_COLORS = {
+    "INPUT":   ("#e6f6ec", "#1f9d57"),   # green
+    "PROCESS": ("#eaf1fb", "#1f6feb"),   # blue
+    "GATE":    ("#fff4e5", "#e8820c"),   # orange
+    "OUTPUT":  ("#efeafe", "#6f42c1"),   # purple
+}
+ROLE_LABEL = {
+    "INPUT": "Input",
+    "PROCESS": "Processing",
+    "GATE": "Decision / Guardrail",
+    "OUTPUT": "Output",
+}
 
 MULTI_AGENT = {8, 26, 29}
 
@@ -101,10 +111,22 @@ def wrap(text: str, width: int) -> str:
     return "\n".join(lines)
 
 
+def role_for(i: int, n: int, gate_idx) -> str:
+    if i == 0:
+        return "INPUT"
+    if gate_idx is not None and i == gate_idx:
+        return "GATE"
+    if i == n - 1:
+        return "OUTPUT"
+    return "PROCESS"
+
+
 def draw(spec) -> Path:
     num = spec.num
     flow = FLOWS[num]
     gate_idx = GATE_STAGE.get(num)
+    n = len(flow)
+    roles = [role_for(i, n, gate_idx) for i in range(n)]
 
     fig, ax = plt.subplots(figsize=(8, 8), dpi=150)
     fig.patch.set_facecolor(BG)
@@ -123,13 +145,21 @@ def draw(spec) -> Path:
     ax.text(4, 90.6, spec.name, color="white", fontsize=16.5,
             fontweight="bold", va="center")
 
-    # --- chapter subtitle ---
-    ax.text(50, 84.5, f"Chapter {spec.chapter} - {CHAPTER_TITLES[spec.chapter]}",
-            color=MUTED, fontsize=11, ha="center", va="center", style="italic")
+    # --- legend (color key for stage roles) ---
+    present = [r for r in ("INPUT", "PROCESS", "GATE", "OUTPUT") if r in roles]
+    lx = 5
+    ly = 84.5
+    for r in present:
+        fc, ec = ROLE_COLORS[r]
+        ax.add_patch(FancyBboxPatch((lx, ly - 1.1, ), 2.4, 2.2,
+                                    boxstyle="round,pad=0.1,rounding_size=0.6",
+                                    facecolor=fc, edgecolor=ec, linewidth=1.6))
+        ax.text(lx + 3.2, ly, ROLE_LABEL[r], color=INK, fontsize=9.5,
+                va="center", ha="left")
+        lx += 3.2 + len(ROLE_LABEL[r]) * 1.55 + 3
 
     # --- vertical pipeline ---
-    n = len(flow)
-    top, bottom = 80.0, 20.0
+    top, bottom = 80.0, 28.0
     box_h = (top - bottom) / n - 2.2
     box_w = 56
     cx = 38
@@ -138,20 +168,20 @@ def draw(spec) -> Path:
         y = top - i * ((top - bottom) / n) - box_h
         cy = y + box_h / 2
         centers.append(cy)
-        is_gate = (gate_idx is not None and i == gate_idx)
-        fc, ec = (GATE, GATE_EDGE) if is_gate else (BOX, BOX_EDGE)
+        role = roles[i]
+        fc, ec = ROLE_COLORS[role]
         ax.add_patch(FancyBboxPatch((cx - box_w / 2, y), box_w, box_h,
                                     boxstyle="round,pad=0.6,rounding_size=2.5",
-                                    facecolor=fc, edgecolor=ec, linewidth=2))
+                                    facecolor=fc, edgecolor=ec, linewidth=2.2))
         ax.text(cx, cy, wrap(label, 26), color=INK, fontsize=12,
                 fontweight="bold", ha="center", va="center")
-        # step number bubble
+        # step number bubble (matches role edge color)
         ax.add_patch(plt.Circle((cx - box_w / 2 + 1.5, y + box_h - 1.5), 1.7,
-                                color=ACCENT, zorder=5))
+                                color=ec, zorder=5))
         ax.text(cx - box_w / 2 + 1.5, y + box_h - 1.5, str(i + 1), color="white",
                 fontsize=9, fontweight="bold", ha="center", va="center", zorder=6)
-        if is_gate:
-            ax.text(cx + box_w / 2 + 2, cy, "HUMAN /\nGUARDRAIL", color=GATE_EDGE,
+        if role == "GATE":
+            ax.text(cx + box_w / 2 + 2, cy, "HUMAN /\nGUARDRAIL", color=ROLE_COLORS["GATE"][1],
                     fontsize=9.5, fontweight="bold", ha="left", va="center")
 
         # arrow to next
@@ -175,14 +205,22 @@ def draw(spec) -> Path:
         ax.text(2.6, (centers[0] + centers[-1]) / 2, "loop", color=LOOP,
                 fontsize=10, fontweight="bold", rotation=90, ha="center", va="center")
 
-    # --- footer band ---
-    ax.add_patch(FancyBboxPatch((0, 0), 100, 14, boxstyle="square,pad=0",
-                                facecolor="#f3f6fb", edgecolor="none"))
-    ax.plot([0, 100], [14, 14], color="#d7e0ee", linewidth=1)
-    ax.text(4, 9.6, "Use case:", color=ACCENT, fontsize=10, fontweight="bold", va="center")
-    ax.text(19, 9.6, wrap(USE_CASES[num], 60), color=INK, fontsize=10, va="center")
-    ax.text(4, 3.2, REPO, color=MUTED, fontsize=9.5, va="center", fontweight="bold")
-    ax.text(96, 3.2, "30 AI Agents in 30 Days", color=MUTED, fontsize=9.5,
+    # --- use case callout (clearly outlined, prominent) ---
+    uc_y, uc_h = 13.5, 10.5
+    ax.add_patch(FancyBboxPatch((4, uc_y), 92, uc_h,
+                                boxstyle="round,pad=0.4,rounding_size=2",
+                                facecolor="#f3f6fb", edgecolor=INK, linewidth=2.2))
+    # accent bar on the left of the callout
+    ax.add_patch(FancyBboxPatch((4.6, uc_y + 0.8), 1.6, uc_h - 1.6,
+                                boxstyle="square,pad=0", facecolor=ACCENT, edgecolor="none"))
+    ax.text(8.5, uc_y + uc_h - 2.4, "USE CASE", color=ACCENT, fontsize=11,
+            fontweight="bold", va="center")
+    ax.text(8.5, uc_y + uc_h / 2 - 1.6, wrap(USE_CASES[num], 58), color=INK,
+            fontsize=11.5, fontweight="bold", va="center")
+
+    # --- footer ---
+    ax.text(4, 4, REPO, color=MUTED, fontsize=9.5, va="center", fontweight="bold")
+    ax.text(96, 4, "30 AI Agents in 30 Days", color=MUTED, fontsize=9.5,
             va="center", ha="right", style="italic")
 
     OUT.mkdir(exist_ok=True)
